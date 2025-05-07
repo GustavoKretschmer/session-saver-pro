@@ -119,19 +119,22 @@ export default function Popup() {
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Dark Mode
+  // Detecta e aplica dark mode no body
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    const onChange = (e: MediaQueryListEvent) => setIsDarkMode(e.matches)
-    setIsDarkMode(mq.matches)
-    mq.addEventListener('change', onChange)
-    return () => mq.removeEventListener('change', onChange)
+    const apply = (dark: boolean) => {
+      setIsDarkMode(dark)
+      document.body.style.backgroundColor = dark ? '#1e1e1e' : '#ffffff'
+    }
+    apply(mq.matches)
+    mq.addEventListener('change', e => apply(e.matches))
+    return () => mq.removeEventListener('change', e => apply(e.matches))
   }, [])
 
-  // Load sessions & language
+  // Carrega sessões e idioma
   useEffect(() => {
     chrome.storage.local.get({ sessions: [] }, result => {
-      const norm = result.sessions.map((s: any) => ({
+      const norm: Session[] = result.sessions.map((s: any) => ({
         name: s.name,
         urls: s.urls,
         timestamp: s.timestamp ?? Date.parse(s.date),
@@ -144,8 +147,11 @@ export default function Popup() {
   }, [])
 
   const dateOpts: Intl.DateTimeFormatOptions = {
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit'
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
   }
 
   // Quick Save
@@ -175,9 +181,7 @@ export default function Popup() {
   }
 
   // Import JSON
-  const importJSON = () => {
-    fileInputRef.current?.click()
-  }
+  const importJSON = () => fileInputRef.current?.click()
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -197,7 +201,7 @@ export default function Popup() {
     e.target.value = ''
   }
 
-  // Favorite (only one)
+  // Toggle favorite
   const toggleFavorite = (index: number) => {
     const updated = sessions.map((s, i) => ({
       ...s,
@@ -207,7 +211,7 @@ export default function Popup() {
     setSessions(updated)
   }
 
-  // Modal state & handlers...
+  // Modal state & handlers
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [modalType, setModalType] = useState<'save' | 'rename'>('save')
   const [inputValue, setInputValue] = useState('')
@@ -264,7 +268,7 @@ export default function Popup() {
     chrome.storage.local.set({ lang: v })
   }
 
-  // Filter + favorite first
+  // Filter + favorite on top
   const visible = sessions
     .filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => (b.favorite ? 1 : 0) - (a.favorite ? 1 : 0))
@@ -273,163 +277,178 @@ export default function Popup() {
     <ConfigProvider theme={{
       algorithm: isDarkMode ? antTheme.darkAlgorithm : antTheme.defaultAlgorithm
     }}>
-      {/* hidden file input */}
-      <input
-        type="file"
-        accept="application/json"
-        ref={fileInputRef}
-        style={{ display: 'none' }}
-        onChange={handleFileChange}
-      />
-
-      <Card size="small" style={{ width: 480 }}>
-        <Space direction="vertical" style={{ width: '100%' }}>
-          <Row justify="space-between" align="middle">
-            <Col><Title level={5}>{i18n[lang].title}</Title></Col>
-            <Col style={{ display: 'flex', alignItems: 'center' }}>
-              <Select
-                value={lang}
-                onChange={v => { setLang(v); chrome.storage.local.set({ lang: v }) }}
-                size="small"
-                style={{ width: 80, marginRight: 8 }}
-              >
-                <Option value="en">EN</Option>
-                <Option value="pt">PT</Option>
-                <Option value="es">ES</Option>
-              </Select>
-              <Tooltip title={i18n[lang].tooltipShortcut}>
-                <QuestionCircleOutlined style={{ fontSize: 16, color: '#888' }} />
-              </Tooltip>
-            </Col>
-          </Row>
-
-          <Text type="secondary">{i18n[lang].sub}</Text>
-
-          {/* filter + import/export */}
-          <Space.Compact style={{ width: '100%' }}>
-            <Search
-              placeholder={i18n[lang].filterPlaceholder}
-              onChange={e => setSearchTerm(e.target.value)}
-              style={{ width: 240 }}
-              allowClear
-            />
-            <Button icon={<DownloadOutlined />} onClick={exportJSON}>
-              {i18n[lang].export}
-            </Button>
-            <Button icon={<UploadOutlined />} onClick={importJSON}>
-              {i18n[lang].import}
-            </Button>
-          </Space.Compact>
-
-          {/* quick/save */}
-          <Space>
-            <Button
-              type="default"
-              onClick={quickSave}
-              block
-              disabled={sessions.length >= 3}
-            >
-              {i18n[lang].quickSave}
-            </Button>
-            <Button
-              type="primary"
-              icon={<SaveOutlined />}
-              onClick={openSaveModal}
-              block
-              disabled={sessions.length >= 3}
-            >
-              {i18n[lang].save}
-            </Button>
-          </Space>
-
-          {/* list or placeholder */}
-          {visible.length === 0 ? (
-            <div style={{ textAlign: 'center', color: '#888', padding: '1rem 0' }}>
-              {i18n[lang].none}
-            </div>
-          ) : (
-            <List
-              dataSource={visible}
-              renderItem={(sess, idx) => {
-                const formatted = new Date(sess.timestamp)
-                  .toLocaleString(localeMap[lang], dateOpts)
-                const originalIndex = sessions.indexOf(sess)
-                return (
-                  <List.Item
-                    actions={[
-                      sess.favorite
-                        ? <StarFilled
-                            key="fav"
-                            style={{ color: '#faad14' }}
-                            title={i18n[lang].unfavorite}
-                            onClick={() => toggleFavorite(originalIndex)}
-                          />
-                        : <StarOutlined
-                            key="fav"
-                            title={i18n[lang].favorite}
-                            onClick={() => toggleFavorite(originalIndex)}
-                          />,
-                      <EditOutlined
-                        key="e"
-                        title={i18n[lang].rename}
-                        onClick={() => openRenameModal(originalIndex)}
-                      />,
-                      <RollbackOutlined
-                        key="r"
-                        title={i18n[lang].restore}
-                        onClick={() => restoreSession(originalIndex)}
-                      />,
-                      <DeleteOutlined
-                        key="d"
-                        title={i18n[lang].del}
-                        onClick={() => deleteSession(originalIndex)}
-                        style={{ color: 'red' }}
-                      />
-                    ]}
-                  >
-                    <List.Item.Meta
-                      title={sess.name}
-                      description={
-                        <div>
-                          <div>{formatted}</div>
-                          <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
-                            {sess.urls.slice(0, 3).map(u => (
-                              <img
-                                key={u}
-                                src={`chrome://favicon/size/16@1x/${u}`}
-                                style={{ width: 16, height: 16 }}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      }
-                    />
-                  </List.Item>
-                )
-              }}
-            />
-          )}
-        </Space>
-      </Card>
-
-      <Modal
-        title={modalType === 'save' ? i18n[lang].save : i18n[lang].rename}
-        open={isModalVisible}
-        onOk={handleOk}
-        onCancel={handleCancel}
-        okText="OK"
-        cancelText={i18n[lang].cancel}
-        width={300}
-        centered
-        bodyStyle={{ padding: 16 }}
+      <div
+        style={{
+          backgroundColor: isDarkMode ? '#1e1e1e' : '#ffffff',
+          minHeight: '100%',
+          padding: 8,
+          boxSizing: 'border-box'
+        }}
       >
-        <Input
-          value={inputValue}
-          onChange={e => setInputValue(e.target.value)}
-          placeholder={modalType === 'save' ? i18n[lang].save : i18n[lang].newName}
-          onPressEnter={handleOk}
+        <input
+          type="file"
+          accept="application/json"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
         />
-      </Modal>
+
+        <Card size="small" style={{ width: 480, background: isDarkMode ? '#1e1e1e' : undefined }}>
+          <Space direction="vertical" style={{ width: '100%' }}>
+            <Row justify="space-between" align="middle">
+              <Col>
+                <Title level={5} style={{ color: isDarkMode ? '#fff' : undefined }}>
+                  {i18n[lang].title}
+                </Title>
+              </Col>
+              <Col style={{ display: 'flex', alignItems: 'center' }}>
+                <Select
+                  value={lang}
+                  onChange={v => {
+                    setLang(v)
+                    chrome.storage.local.set({ lang: v })
+                  }}
+                  size="small"
+                  style={{ width: 80, marginRight: 8 }}
+                >
+                  <Option value="en">EN</Option>
+                  <Option value="pt">PT</Option>
+                  <Option value="es">ES</Option>
+                </Select>
+                <Tooltip title={i18n[lang].tooltipShortcut}>
+                  <QuestionCircleOutlined style={{ fontSize: 16, color: '#888' }} />
+                </Tooltip>
+              </Col>
+            </Row>
+
+            <Text type="secondary" style={{ color: isDarkMode ? '#bbb' : undefined }}>
+              {i18n[lang].sub}
+            </Text>
+
+            <Space.Compact style={{ width: '100%' }}>
+              <Search
+                placeholder={i18n[lang].filterPlaceholder}
+                onChange={e => setSearchTerm(e.target.value)}
+                style={{ width: 240 }}
+                allowClear
+              />
+              <Button icon={<DownloadOutlined />} onClick={exportJSON}>
+                {i18n[lang].export}
+              </Button>
+              <Button icon={<UploadOutlined />} onClick={importJSON}>
+                {i18n[lang].import}
+              </Button>
+            </Space.Compact>
+
+            <Space>
+              <Button
+                type="default"
+                onClick={quickSave}
+                block
+                disabled={sessions.length >= 3}
+              >
+                {i18n[lang].quickSave}
+              </Button>
+              <Button
+                type="primary"
+                icon={<SaveOutlined />}
+                onClick={openSaveModal}
+                block
+                disabled={sessions.length >= 3}
+              >
+                {i18n[lang].save}
+              </Button>
+            </Space>
+
+            {visible.length === 0 ? (
+              <div style={{ textAlign: 'center', color: isDarkMode ? '#888' : '#888', padding: '1rem 0' }}>
+                {i18n[lang].none}
+              </div>
+            ) : (
+              <List
+                dataSource={visible}
+                renderItem={(sess, idx) => {
+                  const formatted = new Date(sess.timestamp)
+                    .toLocaleString(localeMap[lang], dateOpts)
+                  const originalIndex = sessions.indexOf(sess)
+                  return (
+                    <List.Item
+                      style={{ background: isDarkMode ? '#2a2a2a' : undefined }}
+                      actions={[
+                        sess.favorite
+                          ? <StarFilled
+                              key="fav"
+                              style={{ color: '#faad14' }}
+                              title={i18n[lang].unfavorite}
+                              onClick={() => toggleFavorite(originalIndex)}
+                            />
+                          : <StarOutlined
+                              key="fav"
+                              title={i18n[lang].favorite}
+                              onClick={() => toggleFavorite(originalIndex)}
+                            />,
+                        <EditOutlined
+                          key="e"
+                          title={i18n[lang].rename}
+                          onClick={() => openRenameModal(originalIndex)}
+                        />,
+                        <RollbackOutlined
+                          key="r"
+                          title={i18n[lang].restore}
+                          onClick={() => restoreSession(originalIndex)}
+                        />,
+                        <DeleteOutlined
+                          key="d"
+                          title={i18n[lang].del}
+                          onClick={() => deleteSession(originalIndex)}
+                          style={{ color: 'red' }}
+                        />
+                      ]}
+                    >
+                      <List.Item.Meta
+                        title={<span style={{ color: isDarkMode ? '#fff' : undefined }}>{sess.name}</span>}
+                        description={
+                          <div>
+                            <div style={{ color: isDarkMode ? '#ccc' : undefined }}>{formatted}</div>
+                            <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
+                              {sess.urls.slice(0, 3).map(u => (
+                                <img
+                                  key={u}
+                                  src={`chrome://favicon/size/16@1x/${u}`}
+                                  style={{ width: 16, height: 16 }}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        }
+                      />
+                    </List.Item>
+                  )
+                }}
+              />
+            )}
+          </Space>
+        </Card>
+
+        <Modal
+          title={modalType === 'save' ? i18n[lang].save : i18n[lang].rename}
+          open={isModalVisible}
+          onOk={handleOk}
+          onCancel={handleCancel}
+          okText="OK"
+          cancelText={i18n[lang].cancel}
+          width={300}
+          centered
+          bodyStyle={{ padding: 16, background: isDarkMode ? '#1e1e1e' : undefined }}
+        >
+          <Input
+            value={inputValue}
+            onChange={e => setInputValue(e.target.value)}
+            placeholder={modalType === 'save' ? i18n[lang].save : i18n[lang].newName}
+            onPressEnter={handleOk}
+          />
+        </Modal>
+      </div>
     </ConfigProvider>
   )
 }
