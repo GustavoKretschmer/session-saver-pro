@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Session Saver Pro",
+  "version": "1.0",
+  "description": "Save and restore browser sessions",
+  "permissions": [
+    "tabs",
+    "storage",
+    "notifications",
+    "commands"
+  ],
+  "action": {
+    "default_popup": "popup/index.html",
+    "default_icon": "icons/icon128.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "quick-save-session": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "MacCtrl+Shift+S"
+      },
+      "description": "Quick-save current session"
+    }
+  },
+  "icons": {
+    "128": "icons/icon128.png"
+  }
+}

@@ -1,0 +1,26 @@
+{
+    "name": "session-saver-pro",
+    "version": "1.0.0",
+    "description": "Chrome extension to save and restore sessions using React + TypeScript + Ant Design",
+    "scripts": {
+      "dev": "vite",
+      "build": "vite build",
+      "preview": "vite preview"
+    },
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+      "react": "^18.2.0",
+      "react-dom": "^18.2.0",
+      "antd": "^5.8.6",
+      "@ant-design/icons": "^5.2.0"
+    },
+    "devDependencies": {
+      "vite": "^4.4.9",
+      "@vitejs/plugin-react": "^4.0.0",
+      "typescript": "^5.1.6",
+      "@types/react": "^18.0.37",
+      "@types/react-dom": "^18.0.11",
+      "@types/chrome": "^0.0.172"
+    }
+  }
