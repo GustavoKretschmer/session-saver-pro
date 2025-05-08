@@ -60,6 +60,10 @@ const i18n: Record<Lang, any> = {
     unfavorite: 'Unfavorite',
     tooltipShortcut:
       'You can press Ctrl+Shift+S to quickly save your current session without opening the extension.',
+    successImport: 'Imported successfully',
+    failImport: 'Invalid JSON file',
+    premiumMsg: 'Available only on the Premium Plan',
+    upgrade:   'Learn more',
   },
   pt: {
     title: 'Session Saver',
@@ -81,6 +85,10 @@ const i18n: Record<Lang, any> = {
     unfavorite: 'Desfavoritar',
     tooltipShortcut:
       'Você pode pressionar Ctrl+Shift+S para salvar rapidamente sua sessão atual sem precisar abrir a extensão.',
+    successImport: 'Importado com sucesso',
+    failImport: 'Arquivo JSON inválido',
+    premiumMsg: 'Disponível somente no Plano Premium',
+    upgrade:   'Saiba mais',
   },
   es: {
     title: 'Session Saver',
@@ -102,6 +110,10 @@ const i18n: Record<Lang, any> = {
     unfavorite: 'Desmarcar favorito',
     tooltipShortcut:
       'Puede presionar Ctrl+Shift+S para guardar rápidamente su sesión actual sin necesidad de abrir la extensión.',
+    successImport: 'Importado exitosamente',
+    failImport: 'Archivo JSON no válido',
+    premiumMsg: 'Disponible solo en el plan Premium',
+    upgrade:   'Más información',
   }
 }
 
@@ -116,6 +128,7 @@ export default function Popup() {
   const [lang, setLang] = useState<Lang>('en')
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [isPremium, setIsPremium] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -130,6 +143,13 @@ export default function Popup() {
     mq.addEventListener('change', e => apply(e.matches))
     return () => mq.removeEventListener('change', e => apply(e.matches))
   }, [])
+
+  useEffect(() => {
+    // busca o flag que o background salvou
+    chrome.storage.local.get({ isPremium: false }, res => {
+      setIsPremium(res.isPremium);
+    });
+  }, []);
 
   // Carrega sessões e idioma
   useEffect(() => {
@@ -192,9 +212,9 @@ export default function Popup() {
         if (!Array.isArray(imported)) throw Error()
         chrome.storage.local.set({ sessions: imported })
         setSessions(imported)
-        message.success('Imported successfully')
+        message.success(i18n[lang].successImport)
       } catch {
-        message.error('Invalid JSON file')
+        message.error(i18n[lang].failImport)
       }
     }
     reader.readAsText(file)
@@ -358,6 +378,26 @@ export default function Popup() {
               >
                 {i18n[lang].save}
               </Button>
+              <Button
+                type="primary"
+                disabled={!isPremium}
+                onClick={() => {console.log("teste")}}
+              >
+                Feature Premium
+              </Button>
+
+              {!isPremium && (
+                <Text type="warning" style={{ marginTop: 4, textAlign: 'center' }}>
+                  {i18n[lang].premiumMsg}{' '}
+                  <a
+                    href="https://www.youtube.com/"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {i18n[lang].upgrade}
+                  </a>
+                </Text>
+              )}
             </Space>
 
             {visible.length === 0 ? (

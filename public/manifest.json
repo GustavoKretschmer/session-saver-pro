@@ -7,11 +7,18 @@
     "tabs",
     "storage",
     "notifications",
-    "commands"
+    "commands",
+    "identity"
   ],
   "action": {
     "default_popup": "popup/index.html",
     "default_icon": "icons/icon128.png"
+  },
+  "oauth2": {
+    "client_id": "224833460359-nsne3a5js9db7gn6htg5onjcsd4cf148.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/chromewebstore.readonly"
+    ]
   },
   "background": {
     "service_worker": "background.js"
