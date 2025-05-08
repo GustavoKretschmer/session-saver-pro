@@ -12,4 +12,4 @@
 - All session data remains entirely within your own browser.
 
 **Contact**  
-- If you have any questions or concerns, please reach out to us at <your-email@yourdomain.com>.
+- If you have any questions or concerns, please reach out to us at gutokre09@gmail.com.
