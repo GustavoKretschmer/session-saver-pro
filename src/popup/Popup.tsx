@@ -130,6 +130,8 @@ export default function Popup() {
   const [searchTerm, setSearchTerm] = useState('')
   const [isPremium, setIsPremium] = useState(false);
 
+  console.log(isPremium)
+
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Detecta e aplica dark mode no body
@@ -378,26 +380,6 @@ export default function Popup() {
               >
                 {i18n[lang].save}
               </Button>
-              <Button
-                type="primary"
-                disabled={!isPremium}
-                onClick={() => {console.log("teste")}}
-              >
-                Feature Premium
-              </Button>
-
-              {!isPremium && (
-                <Text type="warning" style={{ marginTop: 4, textAlign: 'center' }}>
-                  {i18n[lang].premiumMsg}{' '}
-                  <a
-                    href="https://www.youtube.com/"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {i18n[lang].upgrade}
-                  </a>
-                </Text>
-              )}
             </Space>
 
             {visible.length === 0 ? (
